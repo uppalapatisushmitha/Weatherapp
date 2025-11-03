@@ -1,0 +1,120 @@
+@page "/register"
+@using System.ComponentModel.DataAnnotations
+@using Supabase
+@inject NavigationManager NavigationManager
+
+<h3 class="text-center mt-4">Create Your Account</h3>
+
+<div class="login-container">
+    <EditForm Model="@registerModel" OnValidSubmit="@HandleRegister">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-group">
+            <label>Email</label>
+            <InputText @bind-Value="registerModel.Email" class="form-control" placeholder="Enter your email" />
+            <ValidationMessage For="@(() => registerModel.Email)" />
+        </div>
+
+        <div class="form-group">
+            <label>Password</label>
+            <InputText @bind-Value="registerModel.Password" type="password" class="form-control" placeholder="Enter your password" />
+            <ValidationMessage For="@(() => registerModel.Password)" />
+        </div>
+
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <InputText @bind-Value="registerModel.ConfirmPassword" type="password" class="form-control" placeholder="Confirm your password" />
+            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 mt-3" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span>Registering...</span>
+            }
+            else
+            {
+                <span>Register</span>
+            }
+        </button>
+
+        @if (!string.IsNullOrEmpty(message))
+        {
+            <p class="mt-2 text-center @messageClass">@message</p>
+        }
+    </EditForm>
+
+    <p class="text-center mt-3">
+        Already have an account? <a href="/">Login</a>
+    </p>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool isLoading = false;
+    private string? message;
+    private string messageClass = "text-danger";
+
+    private async Task HandleRegister()
+    {
+        if (registerModel.Password != registerModel.ConfirmPassword)
+        {
+            messageClass = "text-danger";
+            message = "Passwords do not match.";
+            return;
+        }
+
+        isLoading = true;
+        message = null;
+
+        try
+        {
+            // Use globally initialized Supabase client
+            var options = new Supabase.SupabaseOptions
+            {
+                AutoRefreshToken = true,
+                AutoConnectRealtime = true
+            };
+            var client = new Supabase.Client("https://gtzjjmoevyomftgrwxqs.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0empqbW9ldnlvbWZ0Z3J3eHFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzA0NjMsImV4cCI6MjA3Nzc0NjQ2M30.m0_10vJ8olxwGWcc1MhuOx2dlPo-ETh_T04CuBsAm7k", options);
+            var result = await client.Auth.SignUp(registerModel.Email, registerModel.Password);
+
+            if (result?.User != null)
+            {
+                messageClass = "text-success";
+                message = "Registration successful! Please verify your email.";
+                await Task.Delay(2000);
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                messageClass = "text-danger";
+                message = "Registration failed. Try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            messageClass = "text-danger";
+            message = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    public class RegisterModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Confirm your password")]
+        [Compare(nameof(Password), ErrorMessage = "Passwords do not match")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}
