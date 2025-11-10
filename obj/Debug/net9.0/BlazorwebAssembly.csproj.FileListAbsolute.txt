@@ -815,7 +815,6 @@ D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\scopedcss\projectbundle\BlazorwebAs
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\blazor.build.boot-extension.json
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\blazor.boot.json
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\urc0656i5k-8rbvw3on5j.gz
-D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\sif7jnfn60-fcv9eji2om.gz
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\n58gzsl59s-bqjiyaj88i.gz
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\70hdi0ovw8-c2jlpeoesf.gz
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\e4cidd7jq7-erw9l3u2r3.gz
@@ -1090,8 +1089,6 @@ D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Supabase.Storage
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\System.IdentityModel.Tokens.Jwt.8p36zpd3sm.wasm
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\System.Reactive.c15raio1t6.wasm
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Websocket.Client.sntjl98ana.wasm
-D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.ejl4zwps5e.wasm
-D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.9fyq50hup2.pdb
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Microsoft.IdentityModel.Abstractions.vg1dlou7sp.wasm.gz
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Microsoft.IdentityModel.JsonWebTokens.do6a07o59u.wasm.gz
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Microsoft.IdentityModel.Logging.6je01mzmwq.wasm.gz
@@ -1109,8 +1106,6 @@ D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Supabase.Storage
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\System.IdentityModel.Tokens.Jwt.8p36zpd3sm.wasm.gz
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\System.Reactive.c15raio1t6.wasm.gz
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\Websocket.Client.sntjl98ana.wasm.gz
-D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.ejl4zwps5e.wasm.gz
-D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.9fyq50hup2.pdb.gz
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\Microsoft.IdentityModel.Abstractions.dll
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\Microsoft.IdentityModel.JsonWebTokens.dll
 D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\Microsoft.IdentityModel.Logging.dll
@@ -1163,6 +1158,13 @@ D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\glopjnpd4u-rox9ole9mr.gz
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\0crz2six2i-8p36zpd3sm.gz
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\jfni5zjuuz-c15raio1t6.gz
 D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\ru88zil2m0-sntjl98ana.gz
-D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\grv5zi0v8t-ejl4zwps5e.gz
-D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\0g6v9b2bu9-9fyq50hup2.gz
-D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\itsozrul57-opm1re6a0j.gz
+D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\BlazorwebAssembly.sourcelink.json
+D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\itfnv5bbx6-zqpzesu6q7.gz
+D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\sif7jnfn60-jqe8ufnzrr.gz
+D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.nj5eo1yv5j.wasm
+D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.6ee3esclv0.pdb
+D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.nj5eo1yv5j.wasm.gz
+D:\csharp\BlazorwebAssembly\bin\Debug\net9.0\wwwroot\_framework\BlazorwebAssembly.6ee3esclv0.pdb.gz
+D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\grv5zi0v8t-nj5eo1yv5j.gz
+D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\0g6v9b2bu9-6ee3esclv0.gz
+D:\csharp\BlazorwebAssembly\obj\Debug\net9.0\compressed\itsozrul57-v34hhbwu10.gz
