@@ -1,114 +1,129 @@
 ﻿@page "/weather"
-@inject IJSRuntime JS
-@inject HttpClient Http
 @using System.Net.Http.Json
+@inject HttpClient Http
 
-<h2 class="text-center mt-4">🌤️ Weather Forecast</h2>
-<p class="text-center text-muted mb-4">
-    Auto-detected location. 5-day forecast below.
-</p>
+<div class="weather-page">
 
-@if (loading)
-{
-    <div class="loader text-center fw-bold mt-4">Detecting your location...</div>
-}
-else if (errorMessage != null)
-{
-    <div class="alert alert-danger text-center">@errorMessage</div>
-}
-else
-{
-    <div class="card weather-card shadow-lg p-3 mb-4">
-        <h4 class="fw-bold text-primary mb-1">📍 @cityName (@countryCode)</h4>
-        <p class="text-muted mb-0">
-            Coordinates: <b>@latitude</b> , <b>@longitude</b>
-        </p>
+    <!-- Animated Clouds (Parallax) -->
+    <img src="/images/cloud1.png" class="cloud cloud1" />
+    <img src="/images/cloud1.png" class="cloud cloud2" />
+    <img src="/images/cloud1.png" class="cloud cloud3" />
+
+    <h3 class="text-center mt-3 text-light">🌦 5-Day Weather Forecast</h3>
+
+    <div class="text-center mb-4">
+        <input @bind="cityQuery" placeholder="Search city..."
+               class="form-control w-50 d-inline-block shadow-sm" />
+        <button class="btn btn-gradient ms-2" @onclick="SearchCity">Search</button>
     </div>
 
-    <table class="table table-hover table-striped custom-table shadow">
-        <thead class="table-primary">
-            <tr>
-                <th>Date</th>
-                <th>Temp (°C)</th>
-                <th>Feels Like</th>
-                <th>Weather</th>
-                <th>Humidity</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in forecastList)
+    @if (isLoading)
+    {
+        <p class="text-center fs-5 mt-4 loader">Loading weather...</p>
+    }
+    else if (dailyForecasts == null || !dailyForecasts.Any())
+    {
+        <p class="text-center text-danger fs-5">No data found.</p>
+    }
+    else
+    {
+        <div class="card shadow p-3 mb-4 weather-card text-center">
+            <h4>📍 @locationName</h4>
+        </div>
+
+        <div class="d-flex justify-content-center flex-wrap">
+            @foreach (var day in dailyForecasts)
             {
-                <tr>
-                    <td>@item.dt_txt.Split(" ")[0]</td>
-                    <td>@item.main.temp</td>
-                    <td>@item.main.feels_like</td>
-                    <td>
-                        <img src=@($"https://openweathermap.org/img/wn/{item.weather[0].icon}.png")
-                             width="40" class="me-2" />
-                        @item.weather[0].description
-                    </td>
-                    <td>@item.main.humidity %</td>
-                </tr>
+                <div class="card forecast-card text-center m-2 p-3 shadow">
+                    <h6 class="fw-bold">@day.Date</h6>
+                    <img src="@day.IconUrl" width="60" />
+                    <p class="mb-1 fw-bold">@day.Temp°C</p>
+                    <p class="text-light mb-0">@day.Condition</p>
+                </div>
             }
-        </tbody>
-    </table>
-}
+        </div>
+    }
+</div>
 
 @code {
-    bool loading = true;
-    string? errorMessage;
-    double latitude;
-    double longitude;
-    string cityName = "";
-    string countryCode = "";
+    private string cityQuery = "";
+    private string locationName = "";
+    private bool isLoading = true;
 
-    List<WeatherItem> forecastList = new();
+    private List<DailyForecast> dailyForecasts = new();
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadWeatherByAutoLocation();
+    }
+
+    private async Task LoadWeatherByAutoLocation()
+    {
         try
         {
-            var location = await JS.InvokeAsync<LocationData>("getUserLocation");
-            latitude = location.latitude;
-            longitude = location.longitude;
+            var geo = await Http.GetFromJsonAsync<GeoResponse>("https://ipapi.co/json");
+            locationName = geo?.city ?? "";
+            await LoadWeather(locationName);
+        }
+        catch
+        {
+            isLoading = false;
+        }
+    }
 
-            string apiKey = "204e204da512978d1e87ec668635580f";
+    private async Task LoadWeather(string city)
+    {
+        isLoading = true;
+        var apiKey = "204e204da512978d1e87ec668635580f";
+        var url = $"https://api.openweathermap.org/data/2.5/forecast?q={city}&appid={apiKey}&units=metric";
 
-            string url =
-                $"https://api.openweathermap.org/data/2.5/forecast?lat={latitude}&lon={longitude}&units=metric&appid={apiKey}";
-
+        try
+        {
             var data = await Http.GetFromJsonAsync<WeatherResponse>(url);
 
             if (data != null)
             {
-                cityName = data.city.name;
-                countryCode = data.city.country;
-
-                // ✅ filter for daily forecast (12:00 only)
-                forecastList = data.list
-                    .Where(x => x.dt_txt.Contains("12:00:00"))
+                var list = data.list ?? new List<WeatherList>();
+                dailyForecasts = list
+                    .Where(x => DateTime.TryParse(x.dt_txt, out var dt) && dt.Hour == 12)
                     .Take(5)
-                    .ToList();
+                    .Select(x => new DailyForecast
+                    {
+                        Date = DateTime.TryParse(x.dt_txt, out var d) ? d.ToString("dd MMM yyyy") : x.dt_txt,
+                        Temp = x.main?.temp ?? 0,
+                        Condition = x.weather?.FirstOrDefault()?.description ?? "",
+                        IconUrl = x.weather?.FirstOrDefault()?.icon == null
+                            ? ""
+                            : $"https://openweathermap.org/img/wn/{x.weather?.FirstOrDefault()?.icon}@2x.png"
+                    }).ToList();
+
+                locationName = data.city.name + " (" + data.city.country + ")";
             }
         }
-        catch (Exception ex)
+        catch
         {
-            errorMessage = $"Unable to fetch weather data: {ex.Message}";
+            dailyForecasts = new List<DailyForecast>();
         }
-
-        loading = false;
+        finally
+        {
+            isLoading = false;
+        }
     }
 
-    public class LocationData
+    private async Task SearchCity()
     {
-        public double latitude { get; set; }
-        public double longitude { get; set; }
+        if (!string.IsNullOrWhiteSpace(cityQuery))
+        {
+            await LoadWeather(cityQuery);
+        }
     }
+
+    public class GeoResponse { public string? city { get; set; } }
 
     public class WeatherResponse
     {
+        public List<WeatherList>? list { get; set; }
         public City city { get; set; } = new City();
-        public List<WeatherItem> list { get; set; } = new List<WeatherItem>();
     }
 
     public class City
@@ -117,23 +132,26 @@ else
         public string country { get; set; } = "";
     }
 
-    public class WeatherItem
+    public class WeatherList
     {
-        public Main main { get; set; } = new Main();
-        public List<WeatherDesc> weather { get; set; } = new List<WeatherDesc>();
+        public MainData main { get; set; } = new MainData();
+        public List<WeatherDescription> weather { get; set; } = new List<WeatherDescription>();
         public string dt_txt { get; set; } = "";
     }
 
-    public class Main
+    public class MainData { public double temp { get; set; } }
+
+    public class WeatherDescription
     {
-        public float temp { get; set; }
-        public float feels_like { get; set; }
-        public int humidity { get; set; }
+        public string? description { get; set; }
+        public string? icon { get; set; }
     }
 
-    public class WeatherDesc
+    public class DailyForecast
     {
-        public string description { get; set; } = "";
-        public string icon { get; set; } = "";
+        public string Date { get; set; } = "";
+        public double Temp { get; set; }
+        public string Condition { get; set; } = "";
+        public string IconUrl { get; set; } = "";
     }
 }
