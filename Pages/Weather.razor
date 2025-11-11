@@ -1,35 +1,53 @@
 ﻿@page "/weather"
+@inject IJSRuntime JS
 @inject HttpClient Http
+@using System.Net.Http.Json
 
-<PageTitle>Weather</PageTitle>
+<h2 class="text-center mt-4">🌤️ Weather Forecast</h2>
+<p class="text-center text-muted mb-4">
+    Auto-detected location. 5-day forecast below.
+</p>
 
-<h1>Weather</h1>
-
-<p>This component demonstrates fetching data from the server.</p>
-
-@if (forecasts == null)
+@if (loading)
 {
-    <p><em>Loading...</em></p>
+    <div class="loader text-center fw-bold mt-4">Detecting your location...</div>
+}
+else if (errorMessage != null)
+{
+    <div class="alert alert-danger text-center">@errorMessage</div>
 }
 else
 {
-    <table class="table">
-        <thead>
+    <div class="card weather-card shadow-lg p-3 mb-4">
+        <h4 class="fw-bold text-primary mb-1">📍 @cityName (@countryCode)</h4>
+        <p class="text-muted mb-0">
+            Coordinates: <b>@latitude</b> , <b>@longitude</b>
+        </p>
+    </div>
+
+    <table class="table table-hover table-striped custom-table shadow">
+        <thead class="table-primary">
             <tr>
                 <th>Date</th>
-                <th aria-label="Temperature in Celsius">Temp. (C)</th>
-                <th aria-label="Temperature in Farenheit">Temp. (F)</th>
-                <th>Summary</th>
+                <th>Temp (°C)</th>
+                <th>Feels Like</th>
+                <th>Weather</th>
+                <th>Humidity</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
+            @foreach (var item in forecastList)
             {
                 <tr>
-                    <td>@forecast.Date.ToShortDateString()</td>
-                    <td>@forecast.TemperatureC</td>
-                    <td>@forecast.TemperatureF</td>
-                    <td>@forecast.Summary</td>
+                    <td>@item.dt_txt.Split(" ")[0]</td>
+                    <td>@item.main.temp</td>
+                    <td>@item.main.feels_like</td>
+                    <td>
+                        <img src=@($"https://openweathermap.org/img/wn/{item.weather[0].icon}.png")
+                             width="40" class="me-2" />
+                        @item.weather[0].description
+                    </td>
+                    <td>@item.main.humidity %</td>
                 </tr>
             }
         </tbody>
@@ -37,21 +55,85 @@ else
 }
 
 @code {
-    private WeatherForecast[]? forecasts;
+    bool loading = true;
+    string? errorMessage;
+    double latitude;
+    double longitude;
+    string cityName = "";
+    string countryCode = "";
+
+    List<WeatherItem> forecastList = new();
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await Http.GetFromJsonAsync<WeatherForecast[]>("sample-data/weather.json");
+        try
+        {
+            var location = await JS.InvokeAsync<LocationData>("getUserLocation");
+            latitude = location.latitude;
+            longitude = location.longitude;
+
+            string apiKey = "204e204da512978d1e87ec668635580f";
+
+            string url =
+                $"https://api.openweathermap.org/data/2.5/forecast?lat={latitude}&lon={longitude}&units=metric&appid={apiKey}";
+
+            var data = await Http.GetFromJsonAsync<WeatherResponse>(url);
+
+            if (data != null)
+            {
+                cityName = data.city.name;
+                countryCode = data.city.country;
+
+                // ✅ filter for daily forecast (12:00 only)
+                forecastList = data.list
+                    .Where(x => x.dt_txt.Contains("12:00:00"))
+                    .Take(5)
+                    .ToList();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Unable to fetch weather data: {ex.Message}";
+        }
+
+        loading = false;
     }
 
-    public class WeatherForecast
+    public class LocationData
     {
-        public DateOnly Date { get; set; }
+        public double latitude { get; set; }
+        public double longitude { get; set; }
+    }
 
-        public int TemperatureC { get; set; }
+    public class WeatherResponse
+    {
+        public City city { get; set; } = new City();
+        public List<WeatherItem> list { get; set; } = new List<WeatherItem>();
+    }
 
-        public string? Summary { get; set; }
+    public class City
+    {
+        public string name { get; set; } = "";
+        public string country { get; set; } = "";
+    }
 
-        public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+    public class WeatherItem
+    {
+        public Main main { get; set; } = new Main();
+        public List<WeatherDesc> weather { get; set; } = new List<WeatherDesc>();
+        public string dt_txt { get; set; } = "";
+    }
+
+    public class Main
+    {
+        public float temp { get; set; }
+        public float feels_like { get; set; }
+        public int humidity { get; set; }
+    }
+
+    public class WeatherDesc
+    {
+        public string description { get; set; } = "";
+        public string icon { get; set; } = "";
     }
 }
