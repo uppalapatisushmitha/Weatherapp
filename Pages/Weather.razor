@@ -9,14 +9,39 @@
     <img src="/images/cloud1.png" class="cloud cloud2" />
     <img src="/images/cloud1.png" class="cloud cloud3" />
 
-    <h3 class="text-center mt-3 text-light">🌦 5-Day Weather Forecast</h3>
 
+    <!-- 🌍 Top 5 Global Cities Dashboard (Moved Up) -->
+    <h4 class="text-center mt-4 text-primary fw-bold">🌍 Top 5 Global Cities</h4>
+    <div class="d-flex justify-content-center flex-wrap mt-3 mb-4">
+        @if (topCitiesWeather.Count == 0)
+        {
+            <p>Loading global cities...</p>
+        }
+        else
+        {
+            @foreach (var city in topCitiesWeather)
+            {
+                <div class="card text-center m-2 p-3 shadow-sm"
+                     style="width:180px; border-left:4px solid #007bff;">
+                    <h6 class="fw-bold">@city.CityName</h6>
+                    <img src="@city.IconUrl" width="50" />
+                    <p class="mb-1 fw-bold">@city.Temp°C</p>
+                    <p class="text-muted mb-0">@city.Condition</p>
+                </div>
+            }
+        }
+    </div>
+
+     <h3 class="text-center mt-3 text-dark">🌦 5-Day Weather Forecast</h3>
+
+    <!-- 🔍 Search Bar Section -->
     <div class="text-center mb-4">
         <input @bind="cityQuery" placeholder="Search city..."
                class="form-control w-50 d-inline-block shadow-sm" />
         <button class="btn btn-gradient ms-2" @onclick="SearchCity">Search</button>
     </div>
 
+    <!-- 🌦 Main Weather Forecast -->
     @if (isLoading)
     {
         <p class="text-center fs-5 mt-4 loader">Loading weather...</p>
@@ -51,10 +76,12 @@
     private bool isLoading = true;
 
     private List<DailyForecast> dailyForecasts = new();
+    private List<CityWeather> topCitiesWeather = new();
 
     protected override async Task OnInitializedAsync()
     {
         await LoadWeatherByAutoLocation();
+        await LoadTopCitiesWeather(); // 🌍 load dashboard after main weather
     }
 
     private async Task LoadWeatherByAutoLocation()
@@ -118,6 +145,37 @@
         }
     }
 
+    // 🌍 Load Top 5 Global Cities (Dashboard)
+    private async Task LoadTopCitiesWeather()
+    {
+        var cities = new[] { "New York", "London", "Tokyo", "Paris", "Sydney" };
+        var apiKey = "204e204da512978d1e87ec668635580f";
+
+        foreach (var city in cities)
+        {
+            try
+            {
+                var url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric";
+                var data = await Http.GetFromJsonAsync<CurrentWeatherResponse>(url);
+
+                if (data != null)
+                {
+                    topCitiesWeather.Add(new CityWeather
+                    {
+                        CityName = $"{data.name}, {data.sys.country}",
+                        Temp = data.main.temp,
+                        Condition = data.weather.FirstOrDefault()?.main ?? "",
+                        IconUrl = $"https://openweathermap.org/img/wn/{data.weather.FirstOrDefault()?.icon}@2x.png"
+                    });
+                }
+            }
+            catch
+            {
+                // ignore failed city fetch
+            }
+        }
+    }
+
     public class GeoResponse { public string? city { get; set; } }
 
     public class WeatherResponse
@@ -145,6 +203,7 @@
     {
         public string? description { get; set; }
         public string? icon { get; set; }
+        public string? main { get; set; }
     }
 
     public class DailyForecast
@@ -154,4 +213,23 @@
         public string Condition { get; set; } = "";
         public string IconUrl { get; set; } = "";
     }
+
+    // 🌍 Top cities data model
+    public class CityWeather
+    {
+        public string CityName { get; set; } = "";
+        public double Temp { get; set; }
+        public string Condition { get; set; } = "";
+        public string IconUrl { get; set; } = "";
+    }
+
+    public class CurrentWeatherResponse
+    {
+        public string name { get; set; } = "";
+        public Sys sys { get; set; } = new Sys();
+        public MainData main { get; set; } = new MainData();
+        public List<WeatherDescription> weather { get; set; } = new();
+    }
+
+    public class Sys { public string country { get; set; } = ""; }
 }
