@@ -185,3 +185,80 @@ table img {
     color: #fff;
     font-size: 14px;
 }
+
+
+
+.weather-page {
+    min-height: 100vh;
+    padding: 30px;
+    overflow: hidden;
+    transition: background 0.4s ease;
+}
+
+/* LIGHT */
+.light-theme {
+    background: linear-gradient(to top, #6fb1fc, #a0e9ff);
+    color: #222;
+}
+
+/* DARK */
+.dark-theme {
+    background: linear-gradient(to top, #0f2027, #203a43, #2c5364);
+    color: #fff;
+}
+
+/* Cards */
+.card {
+    border-radius: 16px;
+}
+
+.weather-card,
+.forecast-card,
+.city-card {
+    background: rgba(255,255,255,0.35);
+    backdrop-filter: blur(8px);
+}
+
+.dark-theme .weather-card,
+.dark-theme .forecast-card,
+.dark-theme .city-card {
+    background: rgba(0,0,0,0.45);
+    color: #fff;
+}
+
+/* Forecast */
+.forecast-card {
+    width: 160px;
+    padding: 16px;
+    margin: 10px;
+    transition: transform 0.3s;
+}
+.forecast-card:hover {
+    transform: translateY(-6px);
+}
+
+/* Input */
+input.form-control {
+    border-radius: 12px;
+    padding: 14px;
+}
+
+/* Button */
+.btn-gradient {
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+    color: white;
+    border: none;
+}
+
+/* Clouds */
+.cloud {
+    position: absolute;
+    width: 200px;
+    opacity: 0.6;
+    animation: moveCloud 200s linear infinite;
+}
+
+@keyframes moveCloud {
+    from { left: -250px; }
+    to { left: 100%; }
+}

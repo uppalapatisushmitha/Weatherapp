@@ -2,16 +2,24 @@
 @using System.Net.Http.Json
 @inject HttpClient Http
 
-<div class="weather-page">
+<div class="weather-page @(isDarkTheme ? "dark-theme" : "light-theme")">
 
-    <!-- Animated Clouds (Parallax) -->
+    <!-- Theme Toggle -->
+    <div class="text-end mb-3">
+        <button class="btn btn-sm btn-outline-secondary"
+                @onclick="ToggleTheme">
+            @(isDarkTheme ? "☀️ Light Mode" : "🌙 Dark Mode")
+        </button>
+    </div>
+
+    <!-- Animated Clouds -->
     <img src="/images/cloud1.png" class="cloud cloud1" />
     <img src="/images/cloud1.png" class="cloud cloud2" />
     <img src="/images/cloud1.png" class="cloud cloud3" />
 
+    <!-- Top Cities -->
+    <h4 class="text-center mt-4 fw-bold">🌍 Top 5 Global Cities</h4>
 
-    <!-- 🌍 Top 5 Global Cities Dashboard (Moved Up) -->
-    <h4 class="text-center mt-4 text-primary fw-bold">🌍 Top 5 Global Cities</h4>
     <div class="d-flex justify-content-center flex-wrap mt-3 mb-4">
         @if (topCitiesWeather.Count == 0)
         {
@@ -21,49 +29,51 @@
         {
             @foreach (var city in topCitiesWeather)
             {
-                <div class="card text-center m-2 p-3 shadow-sm"
-                     style="width:180px; border-left:4px solid #007bff;">
+                <div class="card text-center m-2 p-3 shadow-sm city-card">
                     <h6 class="fw-bold">@city.CityName</h6>
                     <img src="@city.IconUrl" width="50" />
                     <p class="mb-1 fw-bold">@city.Temp°C</p>
-                    <p class="text-muted mb-0">@city.Condition</p>
+                    <p class="mb-0">@city.Condition</p>
                 </div>
             }
         }
     </div>
 
-     <h3 class="text-center mt-3 text-dark">🌦 5-Day Weather Forecast</h3>
+    <h3 class="text-center mt-3">🌦 5-Day Weather Forecast</h3>
 
-    <!-- 🔍 Search Bar Section -->
+    <!-- Search -->
     <div class="text-center mb-4">
-        <input @bind="cityQuery" placeholder="Search city..."
-               class="form-control w-50 d-inline-block shadow-sm" />
-        <button class="btn btn-gradient ms-2" @onclick="SearchCity">Search</button>
+        <input @bind="cityQuery"
+               placeholder="Search city..."
+               class="form-control w-50 d-inline-block" />
+        <button class="btn btn-gradient ms-2" @onclick="SearchCity">
+            Search
+        </button>
     </div>
 
-    <!-- 🌦 Main Weather Forecast -->
+    <!-- Weather -->
     @if (isLoading)
     {
-        <p class="text-center fs-5 mt-4 loader">Loading weather...</p>
+        <p class="text-center loader">Loading weather...</p>
     }
-    else if (dailyForecasts == null || !dailyForecasts.Any())
+    else if (!dailyForecasts.Any())
     {
-        <p class="text-center text-danger fs-5">No data found.</p>
+        <p class="text-center text-danger">No data found.</p>
     }
     else
     {
-        <div class="card shadow p-3 mb-4 weather-card text-center">
+        <div class="card weather-card text-center mb-4">
             <h4>📍 @locationName</h4>
         </div>
 
         <div class="d-flex justify-content-center flex-wrap">
             @foreach (var day in dailyForecasts)
             {
-                <div class="card forecast-card text-center m-2 p-3 shadow">
-                    <h6 class="fw-bold">@day.Date</h6>
+                <div class="card forecast-card text-center m-2">
+                    <h6>@day.Date</h6>
                     <img src="@day.IconUrl" width="60" />
-                    <p class="mb-1 fw-bold">@day.Temp°C</p>
-                    <p class="text-light mb-0">@day.Condition</p>
+                    <p class="fw-bold">@day.Temp°C</p>
+                    <p>@day.Condition</p>
                 </div>
             }
         </div>
@@ -71,6 +81,7 @@
 </div>
 
 @code {
+    private bool isDarkTheme = false;
     private string cityQuery = "";
     private string locationName = "";
     private bool isLoading = true;
@@ -81,7 +92,12 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadWeatherByAutoLocation();
-        await LoadTopCitiesWeather(); // 🌍 load dashboard after main weather
+        await LoadTopCitiesWeather();
+    }
+
+    private void ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
     }
 
     private async Task LoadWeatherByAutoLocation()
@@ -107,29 +123,24 @@
         try
         {
             var data = await Http.GetFromJsonAsync<WeatherResponse>(url);
+            var list = data?.list ?? new();
 
-            if (data != null)
-            {
-                var list = data.list ?? new List<WeatherList>();
-                dailyForecasts = list
-                    .Where(x => DateTime.TryParse(x.dt_txt, out var dt) && dt.Hour == 12)
-                    .Take(5)
-                    .Select(x => new DailyForecast
-                    {
-                        Date = DateTime.TryParse(x.dt_txt, out var d) ? d.ToString("dd MMM yyyy") : x.dt_txt,
-                        Temp = x.main?.temp ?? 0,
-                        Condition = x.weather?.FirstOrDefault()?.description ?? "",
-                        IconUrl = x.weather?.FirstOrDefault()?.icon == null
-                            ? ""
-                            : $"https://openweathermap.org/img/wn/{x.weather?.FirstOrDefault()?.icon}@2x.png"
-                    }).ToList();
+            dailyForecasts = list
+                .Where(x => DateTime.TryParse(x.dt_txt, out var d) && d.Hour == 12)
+                .Take(5)
+                .Select(x => new DailyForecast
+                {
+                    Date = DateTime.Parse(x.dt_txt).ToString("dd MMM"),
+                    Temp = x.main.temp,
+                    Condition = x.weather.First().description!,
+                    IconUrl = $"https://openweathermap.org/img/wn/{x.weather.First().icon}@2x.png"
+                }).ToList();
 
-                locationName = data.city.name + " (" + data.city.country + ")";
-            }
+            locationName = $"{data?.city.name}, {data?.city.country}";
         }
         catch
         {
-            dailyForecasts = new List<DailyForecast>();
+            dailyForecasts.Clear();
         }
         finally
         {
@@ -140,12 +151,9 @@
     private async Task SearchCity()
     {
         if (!string.IsNullOrWhiteSpace(cityQuery))
-        {
             await LoadWeather(cityQuery);
-        }
     }
 
-    // 🌍 Load Top 5 Global Cities (Dashboard)
     private async Task LoadTopCitiesWeather()
     {
         var cities = new[] { "New York", "London", "Tokyo", "Paris", "Sydney" };
@@ -153,26 +161,16 @@
 
         foreach (var city in cities)
         {
-            try
-            {
-                var url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric";
-                var data = await Http.GetFromJsonAsync<CurrentWeatherResponse>(url);
+            var url = $"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={apiKey}&units=metric";
+            var data = await Http.GetFromJsonAsync<CurrentWeatherResponse>(url);
 
-                if (data != null)
-                {
-                    topCitiesWeather.Add(new CityWeather
-                    {
-                        CityName = $"{data.name}, {data.sys.country}",
-                        Temp = data.main.temp,
-                        Condition = data.weather.FirstOrDefault()?.main ?? "",
-                        IconUrl = $"https://openweathermap.org/img/wn/{data.weather.FirstOrDefault()?.icon}@2x.png"
-                    });
-                }
-            }
-            catch
+            topCitiesWeather.Add(new CityWeather
             {
-                // ignore failed city fetch
-            }
+                CityName = $"{data!.name}, {data.sys.country}",
+                Temp = data.main.temp,
+                Condition = data.weather.First().main!,
+                IconUrl = $"https://openweathermap.org/img/wn/{data.weather.First().icon}@2x.png"
+            });
         }
     }
 
@@ -180,20 +178,14 @@
 
     public class WeatherResponse
     {
-        public List<WeatherList>? list { get; set; }
-        public City city { get; set; } = new City();
-    }
-
-    public class City
-    {
-        public string name { get; set; } = "";
-        public string country { get; set; } = "";
+        public List<WeatherList> list { get; set; } = new();
+        public City city { get; set; } = new();
     }
 
     public class WeatherList
     {
-        public MainData main { get; set; } = new MainData();
-        public List<WeatherDescription> weather { get; set; } = new List<WeatherDescription>();
+        public MainData main { get; set; } = new();
+        public List<WeatherDescription> weather { get; set; } = new();
         public string dt_txt { get; set; } = "";
     }
 
@@ -206,6 +198,8 @@
         public string? main { get; set; }
     }
 
+    public class City { public string name { get; set; } = ""; public string country { get; set; } = ""; }
+
     public class DailyForecast
     {
         public string Date { get; set; } = "";
@@ -214,7 +208,6 @@
         public string IconUrl { get; set; } = "";
     }
 
-    // 🌍 Top cities data model
     public class CityWeather
     {
         public string CityName { get; set; } = "";
@@ -226,8 +219,8 @@
     public class CurrentWeatherResponse
     {
         public string name { get; set; } = "";
-        public Sys sys { get; set; } = new Sys();
-        public MainData main { get; set; } = new MainData();
+        public Sys sys { get; set; } = new();
+        public MainData main { get; set; } = new();
         public List<WeatherDescription> weather { get; set; } = new();
     }
 
