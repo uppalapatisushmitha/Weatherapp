@@ -1,16 +1,47 @@
 ﻿@inherits LayoutComponentBase
-<div class="page">
-    @* <div class="sidebar">
-        <NavMenu />
-    </div> *@
+@inject IJSRuntime JS
 
-    <main>
-        @* <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div> *@
+<div class="weather-page @(isDarkTheme ? "dark-theme" : "light-theme")">
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+    <!-- 🌗 GLOBAL THEME TOGGLE -->
+    <div class="text-end p-3">
+        <button class="btn btn-sm btn-outline-secondary"
+                @onclick="ToggleTheme">
+            @(isDarkTheme ? "☀️ Light Mode" : "🌙 Dark Mode")
+        </button>
+    </div>
+
+    <!-- ☁️ CLOUDS (VISIBLE ON ALL PAGES) -->
+    <img src="/images/cloud1.png" class="cloud cloud1" />
+    <img src="/images/cloud1.png" class="cloud cloud2" />
+    <img src="/images/cloud1.png" class="cloud cloud3" />
+
+    <!-- PAGE CONTENT -->
+    <div class="container">
+        @Body
+    </div>
+
 </div>
+
+@code {
+    private bool isDarkTheme;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var theme = await JS.InvokeAsync<string>("themeManager.getTheme");
+            isDarkTheme = theme == "dark";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+        await JS.InvokeVoidAsync(
+            "themeManager.setTheme",
+            isDarkTheme ? "dark" : "light"
+        );
+    }
+}

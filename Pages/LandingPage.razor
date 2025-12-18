@@ -4,102 +4,82 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<div class="weather-page @(isDarkTheme ? "dark-theme" : "light-theme")">
+<!-- 🔝 TOP NAV -->
+<div class="d-flex justify-content-end align-items-center p-3">
+    <button class="btn btn-outline-primary me-2"
+            @onclick='() => Nav.NavigateTo("/login")'>
+        Login
+    </button>
 
-    <!-- 🔝 TOP NAV -->
-    <div class="d-flex justify-content-between align-items-center p-3">
-        <div>
-            <button class="btn btn-outline-secondary"
-                    @onclick="ToggleTheme">
-                @(isDarkTheme ? "☀️ Light" : "🌙 Dark")
-            </button>
-        </div>
-
-        <div>
-            <button class="btn btn-outline-primary me-2"
-                    @onclick='() => Nav.NavigateTo("/login")'>
-                Login
-            </button>
-
-            <button class="btn btn-primary"
-                    @onclick='() => Nav.NavigateTo("/register")'>
-                Register
-            </button>
-        </div>
-    </div>
-
-    <!-- ☁️ Clouds -->
-    <img src="/images/cloud1.png" class="cloud cloud1" />
-    <img src="/images/cloud1.png" class="cloud cloud2" />
-    <img src="/images/cloud1.png" class="cloud cloud3" />
-
-    <h2 class="text-center mt-1 fw-bold">🌦 Weather Info (Guest Mode)</h2>
-    <p class="text-center text-muted">
-        You can search 3 times. Register to unlock full access.
-    </p>
-
-    <!-- 🔍 Search Bar -->
-    <div class="text-center mb-4 mt-3">
-        <input @bind="cityQuery"
-               placeholder="Search city..."
-               class="form-control w-50 d-inline-block shadow-sm" />
-
-        <button class="btn btn-success ms-2"
-                @onclick="SearchCity">
-            Search
-        </button>
-    </div>
-
-    <!-- 🚫 Limit Message -->
-    @if (searchLimitReached)
-    {
-        <p class="text-center text-danger fw-bold fs-5">
-            You reached 3 searches.
-            Please <a href="/register">Register</a> to continue.
-        </p>
-    }
-
-    <!-- 🌦 Weather Result -->
-    @if (isLoading)
-    {
-        <p class="text-center fs-5 mt-4 loader">Loading weather...</p>
-    }
-    else if (dailyForecasts.Count == 0 && !string.IsNullOrEmpty(cityQuery))
-    {
-        <p class="text-center text-danger fs-5">No data found.</p>
-    }
-    else
-    {
-        @if (dailyForecasts.Count > 0)
-        {
-            <div class="card shadow p-3 mb-4 weather-card text-center">
-                <h4>📍 @locationName</h4>
-            </div>
-
-            <div class="d-flex justify-content-center flex-wrap">
-                @foreach (var day in dailyForecasts)
-                {
-                    <div class="card forecast-card text-center m-2 p-3 shadow">
-                        <h6 class="fw-bold">@day.Date</h6>
-                        <img src="@day.IconUrl" width="60" />
-                        <p class="mb-1 fw-bold">@day.Temp°C</p>
-                        <p class="mb-0">@day.Condition</p>
-                    </div>
-                }
-            </div>
-        }
-    }
+    <button class="btn btn-primary"
+            @onclick='() => Nav.NavigateTo("/register")'>
+        Register
+    </button>
 </div>
 
-@code {
-    // 🌗 Theme
-    private bool isDarkTheme = false;
+<!-- ☁️ Clouds (theme handled by MainLayout) -->
+<img src="/images/cloud1.png" class="cloud cloud1" />
+<img src="/images/cloud1.png" class="cloud cloud2" />
+<img src="/images/cloud1.png" class="cloud cloud3" />
 
-    private void ToggleTheme()
+<h2 class="text-center mt-1 fw-bold">🌦 Weather Info (Guest Mode)</h2>
+<p class="text-center text-muted">
+    You can search 3 times. Register to unlock full access.
+</p>
+
+<!-- 🔍 Search Bar -->
+<div class="text-center mb-4 mt-3">
+    <input @bind="cityQuery"
+           placeholder="Search city..."
+           class="form-control w-50 d-inline-block shadow-sm" />
+
+    <button class="btn btn-success ms-2"
+            @onclick="SearchCity">
+        Search
+    </button>
+</div>
+
+<!-- 🚫 Limit Message -->
+@if (searchLimitReached)
+{
+    <p class="text-center text-danger fw-bold fs-5">
+        You reached 3 searches.
+        Please <a href="/register">Register</a> to continue.
+    </p>
+}
+
+<!-- 🌦 Weather Result -->
+@if (isLoading)
+{
+    <p class="text-center fs-5 mt-4 loader">Loading weather...</p>
+}
+else if (dailyForecasts.Count == 0 && !string.IsNullOrEmpty(cityQuery))
+{
+    <p class="text-center text-danger fs-5">No data found.</p>
+}
+else
+{
+    @if (dailyForecasts.Count > 0)
     {
-        isDarkTheme = !isDarkTheme;
-    }
+        <div class="card shadow p-3 mb-4 weather-card text-center">
+            <h4>📍 @locationName</h4>
+        </div>
 
+        <div class="d-flex justify-content-center flex-wrap">
+            @foreach (var day in dailyForecasts)
+            {
+                <div class="card forecast-card text-center m-2 p-3 shadow">
+                    <h6 class="fw-bold">@day.Date</h6>
+                    <img src="@day.IconUrl" width="60" />
+                    <p class="mb-1 fw-bold">@day.Temp°C</p>
+                    <p class="mb-0">@day.Condition</p>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
     // 🔍 Weather
     private string cityQuery = "";
     private string locationName = "";

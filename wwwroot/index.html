@@ -46,7 +46,17 @@
             );
         });
     };
+
+    window.themeManager = {
+        getTheme: function () {
+            return localStorage.getItem("theme") || "light";
+        },
+        setTheme: function (theme) {
+            localStorage.setItem("theme", theme);
+        }
+    };
 </script>
+
 
 </body>
 

@@ -113,13 +113,7 @@ table img {
 /* ---------------------------
    Weather Page Background
 --------------------------- */
-.weather-page {
-    position: relative;
-    min-height: 100vh;
-    padding: 30px 15px;
-    background: linear-gradient(to top, #6fb1fc, #a0e9ff); /* sky gradient */
-    overflow: hidden;
-}
+
 
 /* ---------------------------
    Animated Clouds (Parallax)

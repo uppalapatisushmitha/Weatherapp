@@ -2,22 +2,14 @@
 @using System.Net.Http.Json
 @inject HttpClient Http
 
-<div class="weather-page @(isDarkTheme ? "dark-theme" : "light-theme")">
+<div class="weather-page">
 
-    <!-- Theme Toggle -->
-    <div class="text-end mb-3">
-        <button class="btn btn-sm btn-outline-secondary"
-                @onclick="ToggleTheme">
-            @(isDarkTheme ? "☀️ Light Mode" : "🌙 Dark Mode")
-        </button>
-    </div>
-
-    <!-- Animated Clouds -->
+    <!-- ☁️ Animated Clouds (theme handled globally) -->
     <img src="/images/cloud1.png" class="cloud cloud1" />
     <img src="/images/cloud1.png" class="cloud cloud2" />
     <img src="/images/cloud1.png" class="cloud cloud3" />
 
-    <!-- Top Cities -->
+    <!-- 🌍 Top Cities -->
     <h4 class="text-center mt-4 fw-bold">🌍 Top 5 Global Cities</h4>
 
     <div class="d-flex justify-content-center flex-wrap mt-3 mb-4">
@@ -41,7 +33,7 @@
 
     <h3 class="text-center mt-3">🌦 5-Day Weather Forecast</h3>
 
-    <!-- Search -->
+    <!-- 🔍 Search -->
     <div class="text-center mb-4">
         <input @bind="cityQuery"
                placeholder="Search city..."
@@ -51,7 +43,7 @@
         </button>
     </div>
 
-    <!-- Weather -->
+    <!-- 🌦 Weather -->
     @if (isLoading)
     {
         <p class="text-center loader">Loading weather...</p>
@@ -81,7 +73,6 @@
 </div>
 
 @code {
-    private bool isDarkTheme = false;
     private string cityQuery = "";
     private string locationName = "";
     private bool isLoading = true;
@@ -93,11 +84,6 @@
     {
         await LoadWeatherByAutoLocation();
         await LoadTopCitiesWeather();
-    }
-
-    private void ToggleTheme()
-    {
-        isDarkTheme = !isDarkTheme;
     }
 
     private async Task LoadWeatherByAutoLocation()
@@ -174,6 +160,7 @@
         }
     }
 
+    // 📦 Models
     public class GeoResponse { public string? city { get; set; } }
 
     public class WeatherResponse
@@ -198,7 +185,11 @@
         public string? main { get; set; }
     }
 
-    public class City { public string name { get; set; } = ""; public string country { get; set; } = ""; }
+    public class City
+    {
+        public string name { get; set; } = "";
+        public string country { get; set; } = "";
+    }
 
     public class DailyForecast
     {
