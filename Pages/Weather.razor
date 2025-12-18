@@ -4,13 +4,13 @@
 
 <div class="weather-page">
 
-    <!-- ☁️ Animated Clouds (theme handled globally) -->
+    <!-- ☁️ Animated Clouds -->
     <img src="/images/cloud1.png" class="cloud cloud1" />
     <img src="/images/cloud1.png" class="cloud cloud2" />
     <img src="/images/cloud1.png" class="cloud cloud3" />
 
-    <!-- 🌍 Top Cities -->
-    <h4 class="text-center mt-4 fw-bold">🌍 Top 5 Global Cities</h4>
+    <!-- 🌍 Top Cities Comparison -->
+    <h4 class="text-center mt-4 fw-bold">🌍 Top 5 Global Cities (Comparison)</h4>
 
     <div class="d-flex justify-content-center flex-wrap mt-3 mb-4">
         @if (topCitiesWeather.Count == 0)
@@ -69,6 +69,59 @@
                 </div>
             }
         </div>
+
+        <!-- 📊 Weather Data Analytics -->
+        <div class="card p-4 mt-4 shadow weather-card">
+            <h4 class="fw-bold text-center">📊 Weather Data Analytics</h4>
+
+            <div class="row text-center mt-3">
+                <div class="col">
+                    <p class="fw-bold">Average Temp</p>
+                    <p>@analytics.AvgTemp.ToString("0.0") °C</p>
+                </div>
+                <div class="col">
+                    <p class="fw-bold">Min / Max</p>
+                    <p>@analytics.MinTemp °C / @analytics.MaxTemp °C</p>
+                </div>
+                <div class="col">
+                    <p class="fw-bold">Avg Humidity</p>
+                    <p>@analytics.AvgHumidity.ToString("0") %</p>
+                </div>
+                <div class="col">
+                    <p class="fw-bold">Rainy Days</p>
+                    <p>@analytics.RainyDays</p>
+                </div>
+            </div>
+
+            <p class="text-center fw-bold mt-3">
+                Temperature Trend: @analytics.TempTrend
+            </p>
+        </div>
+
+        <!-- 📅 Monthly Statistics -->
+        <div class="card p-4 mt-4 shadow weather-card">
+            <h5 class="fw-bold text-center">📅 Monthly Weather Statistics</h5>
+
+            <table class="table table-sm mt-3">
+                <thead>
+                    <tr>
+                        <th>Month</th>
+                        <th>Avg Temp (°C)</th>
+                        <th>Avg Humidity (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in monthlyStats)
+                    {
+                        <tr>
+                            <td>@m.Month</td>
+                            <td>@m.AvgTemp.ToString("0.0")</td>
+                            <td>@m.AvgHumidity.ToString("0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     }
 </div>
 
@@ -79,6 +132,9 @@
 
     private List<DailyForecast> dailyForecasts = new();
     private List<CityWeather> topCitiesWeather = new();
+
+    private WeatherAnalytics analytics = new();
+    private List<MonthlyStats> monthlyStats = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -111,6 +167,8 @@
             var data = await Http.GetFromJsonAsync<WeatherResponse>(url);
             var list = data?.list ?? new();
 
+            CalculateAnalytics(list);
+
             dailyForecasts = list
                 .Where(x => DateTime.TryParse(x.dt_txt, out var d) && d.Hour == 12)
                 .Take(5)
@@ -132,6 +190,31 @@
         {
             isLoading = false;
         }
+    }
+
+    private void CalculateAnalytics(List<WeatherList> list)
+    {
+        if (!list.Any()) return;
+
+        analytics.AvgTemp = list.Average(x => x.main.temp);
+        analytics.MinTemp = list.Min(x => x.main.temp);
+        analytics.MaxTemp = list.Max(x => x.main.temp);
+        analytics.AvgHumidity = list.Average(x => x.main.humidity);
+        analytics.RainyDays = list.Count(x => x.weather.Any(w => w.main == "Rain"));
+
+        analytics.TempTrend =
+            list.Last().main.temp > list.First().main.temp
+                ? "⬆ Increasing"
+                : "⬇ Decreasing";
+
+        monthlyStats = list
+            .GroupBy(x => DateTime.Parse(x.dt_txt).ToString("MMM yyyy"))
+            .Select(g => new MonthlyStats
+            {
+                Month = g.Key,
+                AvgTemp = g.Average(x => x.main.temp),
+                AvgHumidity = g.Average(x => x.main.humidity)
+            }).ToList();
     }
 
     private async Task SearchCity()
@@ -174,9 +257,14 @@
         public MainData main { get; set; } = new();
         public List<WeatherDescription> weather { get; set; } = new();
         public string dt_txt { get; set; } = "";
+        public Dictionary<string, double>? rain { get; set; }
     }
 
-    public class MainData { public double temp { get; set; } }
+    public class MainData
+    {
+        public double temp { get; set; }
+        public int humidity { get; set; }
+    }
 
     public class WeatherDescription
     {
@@ -216,4 +304,21 @@
     }
 
     public class Sys { public string country { get; set; } = ""; }
+
+    public class WeatherAnalytics
+    {
+        public double AvgTemp { get; set; }
+        public double MinTemp { get; set; }
+        public double MaxTemp { get; set; }
+        public double AvgHumidity { get; set; }
+        public int RainyDays { get; set; }
+        public string TempTrend { get; set; } = "";
+    }
+
+    public class MonthlyStats
+    {
+        public string Month { get; set; } = "";
+        public double AvgTemp { get; set; }
+        public double AvgHumidity { get; set; }
+    }
 }
