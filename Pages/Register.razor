@@ -29,6 +29,7 @@
                 <InputText @bind-Value="registerModel.Password" type="password" class="form-control" placeholder="Enter your password" />
                 <ValidationMessage For="@(() => registerModel.Password)" />
             </div>
+            
 
             <div class="mb-3">
                 <label class="form-label fw-semibold">Confirm Password</label>
@@ -54,7 +55,7 @@
         </EditForm>
 
         <p class="text-center mt-3">
-            Already have an account? <a href="/">Login</a>
+            Already have an account? <a href="/login">Login</a>
         </p>
     </div>
 </div>
