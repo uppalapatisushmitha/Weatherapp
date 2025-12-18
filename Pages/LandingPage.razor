@@ -4,47 +4,62 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
-<div class="weather-page">
+<div class="weather-page @(isDarkTheme ? "dark-theme" : "light-theme")">
 
     <!-- 🔝 TOP NAV -->
-    <div class="d-flex justify-content-end p-3">
-        <button class="btn btn-outline-primary me-2" @onclick='() => Nav.NavigateTo("/login")'>
-            Login
-        </button>
+    <div class="d-flex justify-content-between align-items-center p-3">
+        <div>
+            <button class="btn btn-outline-secondary"
+                    @onclick="ToggleTheme">
+                @(isDarkTheme ? "☀️ Light" : "🌙 Dark")
+            </button>
+        </div>
 
-        <button class="btn btn-primary" @onclick='() => Nav.NavigateTo("/register")'>
-            Register
-        </button>
+        <div>
+            <button class="btn btn-outline-primary me-2"
+                    @onclick='() => Nav.NavigateTo("/login")'>
+                Login
+            </button>
+
+            <button class="btn btn-primary"
+                    @onclick='() => Nav.NavigateTo("/register")'>
+                Register
+            </button>
+        </div>
     </div>
 
-    <!-- Clouds -->
+    <!-- ☁️ Clouds -->
     <img src="/images/cloud1.png" class="cloud cloud1" />
     <img src="/images/cloud1.png" class="cloud cloud2" />
     <img src="/images/cloud1.png" class="cloud cloud3" />
 
-    <h2 class="text-center mt-1 text-primary fw-bold">🌦 Weather Info (Guest Mode)</h2>
-    <p class="text-center text-muted">You can search 3 times. Register to unlock full access.</p>
-
+    <h2 class="text-center mt-1 fw-bold">🌦 Weather Info (Guest Mode)</h2>
+    <p class="text-center text-muted">
+        You can search 3 times. Register to unlock full access.
+    </p>
 
     <!-- 🔍 Search Bar -->
     <div class="text-center mb-4 mt-3">
-        <input @bind="cityQuery" placeholder="Search city..."
+        <input @bind="cityQuery"
+               placeholder="Search city..."
                class="form-control w-50 d-inline-block shadow-sm" />
 
-        <button class="btn btn-success ms-2" @onclick="SearchCity">Search</button>
+        <button class="btn btn-success ms-2"
+                @onclick="SearchCity">
+            Search
+        </button>
     </div>
-
 
     <!-- 🚫 Limit Message -->
     @if (searchLimitReached)
     {
         <p class="text-center text-danger fw-bold fs-5">
-            You reached 3 searches. Please <a href="/register">Register</a> to continue.
+            You reached 3 searches.
+            Please <a href="/register">Register</a> to continue.
         </p>
     }
 
-
-    <!-- Weather Result -->
+    <!-- 🌦 Weather Result -->
     @if (isLoading)
     {
         <p class="text-center fs-5 mt-4 loader">Loading weather...</p>
@@ -68,7 +83,7 @@
                         <h6 class="fw-bold">@day.Date</h6>
                         <img src="@day.IconUrl" width="60" />
                         <p class="mb-1 fw-bold">@day.Temp°C</p>
-                        <p class="text-light mb-0">@day.Condition</p>
+                        <p class="mb-0">@day.Condition</p>
                     </div>
                 }
             </div>
@@ -77,43 +92,49 @@
 </div>
 
 @code {
+    // 🌗 Theme
+    private bool isDarkTheme = false;
+
+    private void ToggleTheme()
+    {
+        isDarkTheme = !isDarkTheme;
+    }
+
+    // 🔍 Weather
     private string cityQuery = "";
     private string locationName = "";
     private bool isLoading = false;
 
+    // 🚫 Guest limit
     private int searchCount = 0;
     private bool searchLimitReached = false;
 
     private List<DailyForecast> dailyForecasts = new();
-protected override async Task OnInitializedAsync()
-{
-    searchCount = await JS.InvokeAsync<int>("guestSearch.getCount");
 
-    if (searchCount >= 3)
-        searchLimitReached = true;
-}
-
-   private async Task SearchCity()
-{
-    if (searchLimitReached)
-        return;
-
-    if (string.IsNullOrWhiteSpace(cityQuery))
-        return;
-
-    searchCount++;
-
-    await JS.InvokeVoidAsync("guestSearch.setCount", searchCount);
-
-    if (searchCount > 3)
+    protected override async Task OnInitializedAsync()
     {
-        searchLimitReached = true;
-        return;
+        searchCount = await JS.InvokeAsync<int>("guestSearch.getCount");
+
+        if (searchCount >= 3)
+            searchLimitReached = true;
     }
 
-    await LoadWeather(cityQuery);
-}
+    private async Task SearchCity()
+    {
+        if (searchLimitReached || string.IsNullOrWhiteSpace(cityQuery))
+            return;
 
+        searchCount++;
+        await JS.InvokeVoidAsync("guestSearch.setCount", searchCount);
+
+        if (searchCount > 3)
+        {
+            searchLimitReached = true;
+            return;
+        }
+
+        await LoadWeather(cityQuery);
+    }
 
     private async Task LoadWeather(string city)
     {
@@ -129,38 +150,32 @@ protected override async Task OnInitializedAsync()
 
             if (data != null)
             {
-                var list = data.list ?? new List<WeatherList>();
-
-                dailyForecasts = list
-                    .Where(x => DateTime.TryParse(x.dt_txt, out var dt) && dt.Hour == 12)
-                    .Take(3)                           // Only 3-day forecast for guest
+                dailyForecasts = data.list
+                    .Where(x => DateTime.Parse(x.dt_txt).Hour == 12)
+                    .Take(3) // Guest: 3 days
                     .Select(x => new DailyForecast
                     {
                         Date = DateTime.Parse(x.dt_txt).ToString("dd MMM"),
-                        Temp = x.main?.temp ?? 0,
-                        Condition = x.weather?.FirstOrDefault()?.main ?? "",
-                        IconUrl = x.weather?.FirstOrDefault()?.icon == null
-                            ? ""
-                            : $"https://openweathermap.org/img/wn/{x.weather?.FirstOrDefault()?.icon}@2x.png"
-                    })
-                    .ToList();
+                        Temp = x.main.temp,
+                        Condition = x.weather.First().main!,
+                        IconUrl = $"https://openweathermap.org/img/wn/{x.weather.First().icon}@2x.png"
+                    }).ToList();
 
-                locationName = data.city.name + " (" + data.city.country + ")";
+                locationName = $"{data.city.name} ({data.city.country})";
             }
         }
         catch
         {
-            dailyForecasts = new();
+            dailyForecasts.Clear();
         }
 
         isLoading = false;
     }
 
-
-    // Models
+    // 📦 Models
     public class WeatherResponse
     {
-        public List<WeatherList>? list { get; set; }
+        public List<WeatherList> list { get; set; } = new();
         public City city { get; set; } = new();
     }
 
@@ -181,9 +196,8 @@ protected override async Task OnInitializedAsync()
 
     public class WeatherDescription
     {
-        public string? description { get; set; }
-        public string? icon { get; set; }
         public string? main { get; set; }
+        public string? icon { get; set; }
     }
 
     public class DailyForecast
