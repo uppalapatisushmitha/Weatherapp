@@ -1,0 +1,58 @@
+@page "/profile"
+@using Microsoft.AspNetCore.Components.Forms
+@inject NavigationManager Navigation
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<h3 class="fw-bold mb-3">👤 My Profile</h3>
+
+@if (isLoading)
+{
+    <p>Loading profile...</p>
+}
+else
+{
+    <div class="card p-4 shadow weather-card" style="max-width: 400px;">
+        <div class="text-center">
+            <img src="@imageUrl" class="profile-img mb-3" />
+
+            <InputFile OnChange="UploadImage" accept="image/*" />
+        </div>
+    </div>
+}
+
+@code {
+    private string? userId;
+    private string imageUrl = "";
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userId = await LocalStorage.GetItemAsync<string>("userId");
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            Navigation.NavigateTo("/login", true);
+            return;
+        }
+
+        imageUrl = $"http://localhost:5099/api/profile/{userId}";
+        isLoading = false;
+    }
+
+    private async Task UploadImage(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file == null) return;
+
+        var content = new MultipartFormDataContent();
+        content.Add(new StreamContent(file.OpenReadStream(5_000_000)), "file", file.Name);
+        content.Add(new StringContent(userId!), "userId");
+
+        await new HttpClient().PostAsync(
+            "http://localhost:5099/api/profile/upload",
+            content
+        );
+
+        imageUrl = $"http://localhost:5099/api/profile/{userId}?t={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+    }
+}
